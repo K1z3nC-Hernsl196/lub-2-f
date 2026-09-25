@@ -18,7 +18,7 @@ int main()
 	int inventory[INV_SIZE] = { 0 };
 	//создаем массив из 10 эл. и chair хранит символы в адрес.строке
 	// * указывает на строку символов
-	char* item_names[10] = {
+	char* item_names[INV_SIZE] = {
 		"Пусто",
 		"Дерево",
 		"Камень",
@@ -36,7 +36,7 @@ int main()
 	inventory[2] = 3;
 	inventory[3] = 4;
 	inventory[4] = 5;
-	inventory[5] = 6;
+	inventory[5] = 2;
 	inventory[6] = 7;
 	inventory[7] = 8;
 	inventory[8] = 9;
@@ -51,8 +51,8 @@ int main()
 			"[3] Посмотреть инвентарь\n"
 			"[4] Положить предмет в слот\n"
 			"[5] Выбросить предмет\n"
-			"[6] Выполнить задание по варианту:\n"
-			"Выберите действие: \n");
+			"[6] Удалить повторы из инвентаря:\n"
+			"Выберите действие: ");
 
 		scanf("%d", &choice);
 
@@ -84,33 +84,70 @@ int main()
 		case 3:
 			for (int i = 0; i < INV_SIZE; i++)
 			{
-				printf("Слот %d: [%d] ", i, inventory[i]);
-				printf("(%s)\n", item_names[inventory[i]]);
+				printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]);
 			}
 			break;
 
-		case 4: {
+		case 4: 
+		{
 			int slot;
 			int item_id;
 			printf("Введите номер слота(0-9): \n");
 			scanf("%d", &slot);
 			if (slot < 0 || slot >= INV_SIZE)
 			{
-				printf("Такого слота нет (-_-), меняй \n");
+				printf("Такого слота нет\n");
 				break;
 			}
 			printf("Введите ID предмета: \n");
 			scanf("%d", &item_id);
 			if (item_id < 0 || item_id >= INV_SIZE)
 			{
-				printf("Такого ID нет (-_-),меняй \n");
+				printf("Такого ID нет\n");
 				break;
 			}
 			inventory[slot] = item_id;
-			printf("Предмет %d помещен в слот %d\n", slot);
+			printf("Предмет помещен в слот %d\n", slot);
 			break;
 		}
+		case 5: {
+			int slot;
 
+			printf("Введите номр слота(0-9): \n");
+			scanf("%d", &slot);
+			if (slot < 0 || slot >= INV_SIZE)
+			{
+				printf("Такого слота нет\n");
+				break;
+			}
+			inventory[slot] = 0;
+			printf("Предмет вброшен из слота %d\n", slot);
+			break;
+		}
+		case 6: 
+
+			for (int i = 0; i < INV_SIZE; i++)
+			{
+				printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]);
+			}
+		
+				for (int i = 0; i < INV_SIZE; i++)
+				for (int j = i + 1; j < INV_SIZE; j++)
+				{
+					if (inventory[j] == inventory[i] && inventory[i] != 0)
+					{
+						inventory[j] = 0;
+					}
+				}
+
+			printf("Измененный инвентарь:\n");
+
+			for (int i = 0; i < INV_SIZE; i++) 
+			{
+				printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]);
+
+			}
+			break;
 		}
 	}
 	return 0;
