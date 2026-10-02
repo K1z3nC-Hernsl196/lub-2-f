@@ -53,9 +53,14 @@ int main()
 			"[5] Выбросить предмет\n"
 			"[6] Удалить повторы из инвентаря:\n"
 			"Выберите действие: ");
-
-		scanf("%d", &choice);
-
+		//если польз. ввел буквы (т.е. scanf = 0) просим ввести число
+		if (scanf("%d", &choice) != 1) {
+			printf("Какие буквы? Только числа.");
+		//getchar считываепт по одному символу до Enter
+			while (getchar() != '\n');
+		//пропускает остаток текущей итерации и начинате заново
+			continue;
+		}
 		switch (choice)
 		{
 		case 0:
@@ -70,7 +75,12 @@ int main()
 		{
 			int hours;
 			printf("Сколько часов вы хотите потратить на работу? ");
-			scanf("%d", &hours);
+			if (scanf("%d", &hours) != 1){
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
+			
 			if (hours < 0) {
 				printf("Количество часов неможет быть отрицательным!");
 				break;
@@ -97,14 +107,23 @@ int main()
 			int slot;
 			int item_id;
 			printf("Введите номер слота(0-9): \n");
-			scanf("%d", &slot);
+			if (scanf("%d", &slot) != 1) {
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
 			if (slot < 0 || slot >= INV_SIZE)
 			{
 				printf("Такого слота нет\n");
 				break;
 			}
 			printf("Введите ID предмета: \n");
-			scanf("%d", &item_id);
+			if (scanf("%d", &item_id) != 1) {
+
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
 			if (item_id < 0 || item_id >= INV_SIZE)
 			{
 				printf("Такого ID нет\n");
@@ -117,8 +136,12 @@ int main()
 		case 5: {
 			int slot;
 
-			printf("Введите номр слота(0-9): \n");
-			scanf("%d", &slot);
+			printf("Введите номер слота(0-9): \n");
+			if (scanf("%d", &slot) != 1) {
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
 			if (slot < 0 || slot >= INV_SIZE)
 			{
 				printf("Такого слота нет\n");
@@ -151,6 +174,9 @@ int main()
 				printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]);
 
 			}
+			break;
+		default:
+			printf("Такого пункта в меню нет.");
 			break;
 		}
 	}
