@@ -71,6 +71,10 @@ int main()
 			int hours;
 			printf("Сколько часов вы хотите потратить на работу? ");
 			scanf("%d", &hours);
+			if (hours < 0) {
+				printf("Количество часов неможет быть отрицательным!");
+				break;
+			}
 			current_hour += hours;
 			while (current_hour >= 24)
 			{
