@@ -1,8 +1,48 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <windows.h>
-//подключаем инструменты для работы с вводом и выводом далее MAIN начало программы
+#include <string.h>
+//подключаем инструменты для работы с вводом,выводом и прочее
 #define INV_SIZE 10
+#define MAX_ITEMS 10
+#define MAX_NAME_LEN 32 //+ 1 под конец строки в С (\0)
+#define MAX_FARMER_NAME 33
+//char тип "символ"
+char farmer_name[MAX_FARMER_NAME] = "Фермер";
+
+int load_items(char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
+	//работа с открытым файлом
+	FILE* file = fopen("items.txt", "r");
+	if (file == NULL) {
+		perror("Ошибка открытия");
+		return 0;
+	}
+	for (int i = 0; i < MAX_ITEMS; i++) {
+		if (fgets(item_names[i], MAX_NAME_LEN, file) == NULL) {
+
+			fclose(file);
+			return 0;
+		}
+		//убираем символы переноса строки т.к fgets может сохранить их в названии
+		item_names[i][strcspn(item_names[i], "\n")] = '\0';
+	}
+		fclose(file);
+		return 1;
+}
+
+
+void show_menu(void) {
+	printf("\n===== МЕНЮ ФЕРМЕРА %s ====\n"
+		"[0] Выход\n"
+		"[1] Посмотреть на часы\n"
+		"[2] Перемотать время(поработать)\n"
+		"[3] Посмотреть инвентарь\n"
+		"[4] Положить предмет в слот\n"
+		"[5] Выбросить предмет\n"
+		"[6] Удалить повторы из инвентаря:\n"
+		"Выберите действие: ", farmer_name);
+}
+
 int main()
 {
 	SetConsoleOutputCP(CP_UTF8);
@@ -10,52 +50,36 @@ int main()
 
 	int current_day = 1;
 	int current_hour = 8;
-
 	int running = 1;
 	// создадим целочисл. переменную (для выбора игрока в меню)
 	int choice;
 
 	int inventory[INV_SIZE] = { 0 };
-	//создаем массив из 10 эл. и chair хранит символы в адрес.строке
-	// * указывает на строку символов
-	char* item_names[INV_SIZE] = {
-		"Пусто",
-		"Дерево",
-		"Камень",
-		"Семена",
-		"Морковка",
-		"Ведро воды",
-		"Земля",
-		"Рыба",
-		"Удочка",
-		"Лопата"
-	};
+	char item_names[MAX_ITEMS][MAX_NAME_LEN];
+	if (!load_items(item_names)) {
+		printf("Не удалось загрузить item.txt\n");
+		return 1;
+	}
 
-	inventory[0] = 1;
-	inventory[1] = 2;
-	inventory[2] = 3;
-	inventory[3] = 4;
-	inventory[4] = 5;
-	inventory[5] = 2;
-	inventory[6] = 7;
-	inventory[7] = 8;
-	inventory[8] = 9;
-	inventory[9] = 0;
+	printf("Введите имя фермера: ");
+	if (scanf("%32s", farmer_name) != 1) { //читаем строку до 32 симв без пробелов
+		farmer_name[strcspn(farmer_name, "\n")] = '\0'; // если ниче не ввели
+		strcpy(farmer_name, "Фермер"); // остаеться по дефолту фермер
+	}
+	while (getchar() != '\n'); //очищаем буфер от остатков 
 
 	while (running)
 	{
-		printf("\n===== МЕНЮ ФЕРМЕРА ====\n"
-			"[0] Выход\n"
-			"[1] Посмотреть на часы\n"
-			"[2] Перемотать время(поработать)\n"
-			"[3] Посмотреть инвентарь\n"
-			"[4] Положить предмет в слот\n"
-			"[5] Выбросить предмет\n"
-			"[6] Удалить повторы из инвентаря:\n"
-			"Выберите действие: ");
+		show_menu();
 
-		scanf("%d", &choice);
-
+		//если польз. ввел буквы (т.е. scanf = 0) просим ввести число
+		if (scanf("%d", &choice) != 1) {
+			printf("Какие буквы? Только числа.");
+		//getchar считываепт по одному символу до Enter
+			while (getchar() != '\n');
+		//пропускает остаток текущей итерации и начинате заново
+			continue;
+		}
 		switch (choice)
 		{
 		case 0:
@@ -70,7 +94,12 @@ int main()
 		{
 			int hours;
 			printf("Сколько часов вы хотите потратить на работу? ");
-			scanf("%d", &hours);
+			if (scanf("%d", &hours) != 1){
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
+			
 			if (hours < 0) {
 				printf("Количество часов неможет быть отрицательным!");
 				break;
@@ -97,14 +126,23 @@ int main()
 			int slot;
 			int item_id;
 			printf("Введите номер слота(0-9): \n");
-			scanf("%d", &slot);
+			if (scanf("%d", &slot) != 1) {
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
 			if (slot < 0 || slot >= INV_SIZE)
 			{
 				printf("Такого слота нет\n");
 				break;
 			}
 			printf("Введите ID предмета: \n");
-			scanf("%d", &item_id);
+			if (scanf("%d", &item_id) != 1) {
+
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
 			if (item_id < 0 || item_id >= INV_SIZE)
 			{
 				printf("Такого ID нет\n");
@@ -117,8 +155,12 @@ int main()
 		case 5: {
 			int slot;
 
-			printf("Введите номр слота(0-9): \n");
-			scanf("%d", &slot);
+			printf("Введите номер слота(0-9): \n");
+			if (scanf("%d", &slot) != 1) {
+				printf("Какие буквы? Только числа.");
+				while (getchar() != '\n');
+				break;
+			}
 			if (slot < 0 || slot >= INV_SIZE)
 			{
 				printf("Такого слота нет\n");
@@ -151,6 +193,9 @@ int main()
 				printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]);
 
 			}
+			break;
+		default:
+			printf("Такого пункта в меню нет.");
 			break;
 		}
 	}

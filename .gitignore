@@ -1,0 +1,13 @@
+.vs/
+x64/
+Debug/
+Release/
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.exe
+*.o
+*.obj
+*.tlog
+diary.txt
+output.txt
