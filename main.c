@@ -53,6 +53,7 @@ void show_menu(void) {
         "[6] Удалить повторы из инвентаря\n"
         "[7] Поиск предмета по названию\n"
         "[8] Записать состояние в дневник\n"
+        "[9] Обработать дилог НПС\n"
         "Выберите действие: ", farmer_name);
 }
 
@@ -179,12 +180,12 @@ void save_diary(void) {
         return;
     }
 
-    fprintf(file, "Farmer: %s\n", farmer_name);
-    fprintf(file, "Day: %d, Time: %02d:00\n", current_day, current_hour);
-    fprintf(file, "Inventory:\n");
+    fprintf(file, "Фермер: %s\n", farmer_name);
+    fprintf(file, "День: %d, Time: %02d:00\n", current_day, current_hour);
+    fprintf(file, "Инвентарь:\n");
 
     for (int i = 0; i < INV_SIZE; i++) {
-        fprintf(file, "Slot %d: %s\n", i, item_names[inventory[i]]);
+        fprintf(file, "Слот %d: %s\n", i, item_names[inventory[i]]);
     }                                  
     fprintf(file, "~~~~~~~~~~~~~~~~~~~~~\n");
 
@@ -192,7 +193,62 @@ void save_diary(void) {
 
     printf("Состояние игры записано в diary.txt\n");
 }
+void nps_dialogs(void) {
+    FILE* input = fopen("input.txt", "r");
 
+    if (input == NULL) {
+        printf("Не удалось открыть input.txt\n");
+        return;
+    }
+                            // write режим записи
+    FILE* output = fopen("output.txt", "w"); // output  Готовый персонализированный текст письма по заданию
+
+    if (output == NULL) {
+        printf("Не удалось открыть output.txt\n");
+        fclose(input);
+        return;
+    }
+    // сhar хранит симв.
+    char line[1024]; // массивчик для считывания текста из файла
+    char day_text[16];// масив для номера для в виде строки т.к. current_day целое число а нужен текст
+            //куда запис, размер буфера, итд крч
+    snprintf(day_text, sizeof(day_text), "%d", current_day); // преобраз числор в текст
+
+    printf("\n--- NPC Диалог ---\n");
+    // цикл который работает пока удаеться читать строки или ее части
+            //просто масив, макс. размер считыв. данных и откуда читаем
+    while (fgets(line, sizeof(line), input) != NULL) {
+        const char* p = line;
+                 // ^ просто указать на  текущ. позицию в строке
+        while (*p != '\0') {
+            if (strncmp(p, "<NAME>", 6) == 0) { // если текст начинается с NAME пишет имя фер. если нет копирует тек. симв как есть
+                fprintf(output, "%s", farmer_name); 
+                printf("%s", farmer_name);
+                p += 6; // перемещаем указатель на 6 симв. ЗА шаблон т.к. программа начнет обрабатывать NAME повторно
+            }
+            else if (strncmp(p, "<DAY>", 5) == 0) {
+                fprintf(output, "%s", day_text); // номер тек. дня в виде строки 
+                printf("%s", day_text);
+                p += 5; // тож самое, пропускает найденый шаблон
+            }
+            else if (strncmp(p, "<ITEM>", 6) == 0) {
+                fprintf(output, "%s", item_names[inventory[0]]);
+                printf("%s", item_names[inventory[0]]);
+                p += 6;
+            } // все тоже самое как и выше
+            else { 
+                fputc(*p, output); // записываем тек.сим в файл
+                putchar(*p); // выводим его на экран
+                p++; // передвигаем на следущ симв
+            }
+        }
+    }
+    // ну и закрыть файлы
+    fclose(input);
+    fclose(output);
+
+    printf("\n==Диалог сохранён в output.txt==\n");
+}
 int main()
 {
     SetConsoleOutputCP(CP_UTF8);
@@ -202,7 +258,6 @@ int main()
         printf("items.txt не найден. Используем стандартные названия.\n");
         set_default_items(item_names);
     }
-    printf("Проверка ебучих названий: %s, %s, %s\n", item_names[0], item_names[1], item_names[2]);
     printf("Введите имя фермера: ");
     if (scanf("%32s", farmer_name) != 1) {
         strcpy(farmer_name, "Фермер");
@@ -244,6 +299,8 @@ int main()
             search_item(); break;
         case 8:
             save_diary(); break;
+        case 9:
+            nps_dialogs(); break;
         default:
             printf("Такого пункта в меню нет.\n");
             break;
