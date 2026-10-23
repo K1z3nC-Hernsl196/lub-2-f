@@ -180,14 +180,25 @@ void save_diary(void) {
         return;
     }
 
+    printf("\n--- Состояние игры ---\n");
+    fprintf(file, "--- Состояние игры ---\n");
+
+    printf("Фермер: %s\n", farmer_name);
     fprintf(file, "Фермер: %s\n", farmer_name);
-    fprintf(file, "День: %d, Time: %02d:00\n", current_day, current_hour);
+
+    printf("День: %d, Время: %02d:00\n", current_day, current_hour);
+    fprintf(file, "ДЕнь: %d, Время: %02d:00\n", current_day, current_hour);
+
+    printf("Инвентарь:\n");
     fprintf(file, "Инвентарь:\n");
 
     for (int i = 0; i < INV_SIZE; i++) {
+        printf("Слот %d: %s\n", i, item_names[inventory[i]]);
         fprintf(file, "Слот %d: %s\n", i, item_names[inventory[i]]);
-    }                                  
-    fprintf(file, "~~~~~~~~~~~~~~~~~~~~~\n");
+    }
+
+    printf("~~~~~~~~~~~~~~~~~~~~~~\n");
+    fprintf(file, "~~~~~~~~~~~~~~~~~~~~~~\n");
 
     fclose(file);
 
@@ -259,11 +270,13 @@ int main()
         set_default_items(item_names);
     }
     printf("Введите имя фермера: ");
-    if (scanf("%32s", farmer_name) != 1) {
-        strcpy(farmer_name, "Фермер");
-    }
-    while (getchar() != '\n');
+    if (fgets(farmer_name, sizeof(farmer_name), stdin) != NULL) {
+        farmer_name[strcspn(farmer_name, "\n")] = '\0';
 
+        if (strlen(farmer_name) == 0) {
+            strcpy(farmer_name, "Фермер");
+        }
+    }
     int running = 1;
     int choice;
 
