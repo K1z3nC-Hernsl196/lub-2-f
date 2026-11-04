@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define INV_SIZE 10
 #define MAX_ITEMS 10
@@ -14,7 +15,6 @@ int current_day = 1;
 int current_hour = 8;
 int inventory[INV_SIZE] = { 0 };
 char item_names[MAX_ITEMS][MAX_NAME_LEN];
-
 
 int load_items(char item_names[MAX_ITEMS][MAX_NAME_LEN]) {
     FILE* file = fopen("items.txt", "r");
@@ -53,7 +53,8 @@ void show_menu(void) {
         "[6] Удалить повторы из инвентаря\n"
         "[7] Поиск предмета по названию\n"
         "[8] Записать состояние в дневник\n"
-        "[9] Обработать дилог НПС\n"
+        "[9] Обработать дилогов НПС\n"
+        "[10] Отправиться в приключение\n"
         "Выберите действие: ", farmer_name);
 }
 
@@ -148,7 +149,7 @@ void clear_input(void) {
     while ((c = getchar()) != '\n' && c != EOF) { //проверяет что это не конец строки И не конец входного потока
     }                                             // return ненужен т.к. зач вообще нужны уловия тут??
 }
-
+//[7]
 void search_item(void) {
     char search_name[MAX_NAME_LEN];
     int found = 0;
@@ -172,6 +173,7 @@ void search_item(void) {
         printf("Предмет с названием \"%s\" не найден \n", search_name);
     }
 }
+//[8]
 void save_diary(void) {
     FILE* file = fopen("diary.txt", "a");
 
@@ -204,6 +206,7 @@ void save_diary(void) {
 
     printf("Состояние игры записано в diary.txt\n");
 }
+//[9]
 void nps_dialogs(void) {
     FILE* input = fopen("input.txt", "r");
 
@@ -260,6 +263,99 @@ void nps_dialogs(void) {
 
     printf("\n==Диалог сохранён в output.txt==\n");
 }
+
+char** create_map(int height, int width) {
+    // выделяем память под массив указателей(строк)
+    char** map = malloc(height * sizeof(char*)); 
+
+    if (map == NULL) {
+        return NULL;
+    }
+
+    // память для каждой строки
+    for (int i = 0; i < height; i++) {
+
+        map[i] = malloc(width * sizeof(char));
+
+        if (map[i] == NULL) {
+
+            // Освобождаем уже выделенные строки
+            for (int j = 0; j < i; j++) {
+                free(map[j]);
+            }
+
+            free(map);
+            return NULL;
+        }
+    }
+
+    // Заполняем карту
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+
+            if (y == 0 || y == height - 1 ||
+                x == 0 || x == width - 1) {
+
+                map[y][x] = '#';
+            }
+            else {
+                map[y][x] = '.';
+            }
+        }
+    }
+
+    return map;
+}
+
+
+// выводим карту 
+void print_map(char** map, int height, int width) {
+
+    for (int y = 0; y < height; y++) {
+
+        for (int x = 0; x < width; x++) {
+            printf("%c ", map[y][x]);
+        }
+
+        printf("\n");
+    }
+}
+
+
+// освобождаем память памяти
+void free_map(char** map, int height) {
+
+    for (int i = 0; i < height; i++) {
+        free(map[i]);
+    }
+
+    free(map);
+}
+
+
+// запуск подземел ья
+void dungeon_map(void) {
+
+    int height = 10;
+    int width = 10;
+
+    char** map = create_map(height, width);
+
+    if (map == NULL) {
+        printf("Не удалось создать карту!\n");
+        return;
+    }
+
+    printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
+
+    print_map(map, height, width);
+
+    printf("\nНажмите Enter, чтобы вернуться в меню...");
+    getchar();
+
+    free_map(map, height);
+}
+
 int main()
 {
     SetConsoleOutputCP(CP_UTF8);
@@ -314,6 +410,8 @@ int main()
             save_diary(); break;
         case 9:
             nps_dialogs(); break;
+        case 10:
+            dungeon_map(); break;
         default:
             printf("Такого пункта в меню нет.\n");
             break;

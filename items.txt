@@ -1,10 +1,10 @@
-Пусто
-Дерево
-Камень
-Семена
-Морковка
-Ведро воды
-Земля
-Рыба
-Удочка
-Лопата
+Empty
+Wood
+Stone
+Seeds
+Carrot
+Water Bucket
+Soil
+Fish
+Fishing Rod
+Shovel
