@@ -264,38 +264,42 @@ void nps_dialogs(void) {
     printf("\n==Диалог сохранён в output.txt==\n");
 }
 
+
+// Создание карты
 char** create_map(int height, int width) {
-    // выделяем память под массив указателей(строк)
-    char** map = malloc(height * sizeof(char*)); 
+
+    // Выделяем память под указатели на строки
+    // map будет хранить адрес участка памяти, в котором находятся указатели на строки карты 
+    char** map = malloc(height * sizeof(char*));
 
     if (map == NULL) {
         return NULL;
     }
 
-    // память для каждой строки
+    // выделяем память под каждую строку
     for (int i = 0; i < height; i++) {
 
         map[i] = malloc(width * sizeof(char));
 
         if (map[i] == NULL) {
 
-            // Освобождаем уже выделенные строки
+            // освобождаем уже созданные строки если че то пошло нетак
             for (int j = 0; j < i; j++) {
-                free(map[j]);
+                free(map[j]); // освобождаем память дивианта
             }
 
-            free(map);
+            free(map); // и массив указателей
             return NULL;
         }
     }
 
-    // Заполняем карту
+    // границы и внутр. часть
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
 
             if (y == 0 || y == height - 1 ||
                 x == 0 || x == width - 1) {
-
+//клетка в первой\последней строке || клетка в первом\последнем столбце
                 map[y][x] = '#';
             }
             else {
@@ -304,15 +308,31 @@ char** create_map(int height, int width) {
         }
     }
 
+    // препятствия
+    for (int y = 1; y < height - 1; y++) { 
+        for (int x = 1; x < width - 1; x++) {
+            // заполняем внутренности
+            if (rand() % 100 < 20) {
+            //остаток от деления на 100, то есть число от 0 до 99.
+            // < 20 потому что препятствие появится при числах от 0 до 19.(20%)
+                if (rand() % 2 == 0) {
+                    map[y][x] = 'T';
+                }
+                else {
+                    map[y][x] = 'R';
+                }
+            }
+        }
+    }
+
     return map;
 }
 
 
-// выводим карту 
+// выводжим карту
 void print_map(char** map, int height, int width) {
 
     for (int y = 0; y < height; y++) {
-
         for (int x = 0; x < width; x++) {
             printf("%c ", map[y][x]);
         }
@@ -322,7 +342,7 @@ void print_map(char** map, int height, int width) {
 }
 
 
-// освобождаем память памяти
+// освобождение памяти
 void free_map(char** map, int height) {
 
     for (int i = 0; i < height; i++) {
@@ -333,20 +353,22 @@ void free_map(char** map, int height) {
 }
 
 
-// запуск подземел ья
+// подземелье
 void dungeon_map(void) {
 
-    int height = 10;
-    int width = 10;
+    // случайные размеры от 5*5 до 30*30
+    int height = rand() % 26 + 5;
+    int width = rand() % 26 + 5;
+
+    printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
+    printf("Размер карты: %d x %d\n", height, width);
 
     char** map = create_map(height, width);
 
     if (map == NULL) {
-        printf("Не удалось создать карту!\n");
+        printf("Не удалось создать карту:(\n");
         return;
     }
-
-    printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
 
     print_map(map, height, width);
 
