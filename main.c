@@ -9,7 +9,8 @@
 #define MAX_NAME_LEN 32
 #define MAX_FARMER_NAME 33
 #define MAP_MIN_SIZE 5
-#define MAP_MAX_SIZE 30
+#define MAP_SIZE_RANGE 26
+#define ICE_CHANCE 15
 
 // глобальные переменные (видны везде)
 char farmer_name[MAX_FARMER_NAME] = "Фермер";
@@ -325,7 +326,7 @@ char** create_map(int height, int width) {
                 }
 
             }
-            else if (rand() % 100 < 30) {
+            else if (rand() % 100 < ICE_CHANCE) {
                 map[y][x] = '~';
             }
         }
@@ -356,6 +357,7 @@ void free_map(char** map, int height) {
 
     free(map);
 }
+
 // движение wasd
 int move_player(char** map, int height, int weight, int* player_x, int* player_y, char direction) {
     int new_x = *player_x;
@@ -373,71 +375,91 @@ int move_player(char** map, int height, int weight, int* player_x, int* player_y
     else if (direction == 'D' || direction == 'd') {
         new_x++;
     }
-    //проверяем границы краты
-    if (map[new_y][new_x] == '#' || map[new_y][new_x] == 'T' || map[new_y][new_x] == 'R') {
-        return 0;
+    else {
+        return 0;   // другая клавиша - никуда не идём
     }
-    // обновляем координаты
-    *player_x = new_x;
-    *player_y = new_y;
-
-
     return 1;
+}
+
+// создает этаж: карта + лестница D + герой + лестница U рядом
+char** new_floor(int* height, int* width, int* px, int* py) {
+    *height = rand() % MAP_SIZE_RANGE + MAP_MIN_SIZE;
+    *width = rand() % MAP_SIZE_RANGE + MAP_MIN_SIZE;
+
+    char** map = create_map(*height, *width);
+    if (map == NULL) {
+        return NULL;
+    }
+
+    // лестница вниз D на случайной свободной клетке
+    int x, y;
+    do {
+        x = rand() % (*width - 2) + 1;
+        y = rand() % (*height - 2) + 1;
+    } while (map[y][x] != '.');
+    map[y][x] = 'D';
+
+    // герой: клетка '.', и справа от неё тоже '.', туда поставим U
+    do {
+        *px = rand() % (*width - 2) + 1;
+        *py = rand() % (*height - 2) + 1;
+    } while (map[*py][*px] != '.' || map[*py][*px + 1] != '.');
+    map[*py][*px + 1] = 'U';
+
+    return map;
 }
 
 // подземелье
 void dungeon_map(void) {
-    //случайные размеры от 5*5 до 30*30
-    int height = rand() % 26 + 5;
-    int width = rand() % 26 + 5;
+    int height, width, player_x, player_y;
+    int depth = 1;   // номер этажа
 
-    printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
-    printf("Размер карты: %d x %d\n", height, width);
-    char** map = create_map(height, width);
-
+    char** map = new_floor(&height, &width, &player_x, &player_y);
     if (map == NULL) {
         printf("Не удалось создать карту!\n");
         return;
     }
 
-    int player_x = rand() % (width - 2) + 1;
-    int player_y = rand() % (height - 2) + 1;
-
-    while (map[player_y][player_x] != '.') {
-        player_x = rand() % (width - 2) + 1;
-        player_y = rand() % (height - 2) + 1;
-    }
-
+    printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
 
     char direction;
 
     while (1) {
-
+        printf("\nЭтаж: %d, размер карты: %d x %d\n", depth, height, width);
         print_map(map, height, width, player_x, player_y);
 
-        printf("\nW/A/S/D - движение, Q - выход: ");
+        printf("\nW/A/S/D - движение, Q - домой (только на лестнице U): ");
 
         if (scanf(" %c", &direction) != 1) {
             clear_input();
             continue;
         }
-
         clear_input();
 
         if (direction == 'Q' || direction == 'q') {
-            break;
+            if (map[player_y][player_x] == 'U') {
+                break;
+            }
+            printf("Домой можно уйти только с лестницы U!\n");
+            continue;
         }
 
-        if (move_player(map, height, width,
-            &player_x, &player_y, direction) == 0) {
-
+        if (move_player(map, height, width, &player_x, &player_y, direction) == 0) {
             printf("Туда пройти нельзя!\n");
+        }
+        else if (map[player_y][player_x] == 'D') {
+            free_map(map, height);   // старый этаж удаляем
+            depth++;
+            map = new_floor(&height, &width, &player_x, &player_y);
+            if (map == NULL) {
+                printf("Не удалось создать этаж!\n");
+                return;
+            }
+            printf("Вы спустились на этаж %d!\n", depth);
         }
     }
 
     free_map(map, height);
-
-
 }
 
 int main()
