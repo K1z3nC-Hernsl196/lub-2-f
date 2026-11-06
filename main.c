@@ -299,7 +299,7 @@ char** create_map(int height, int width) {
 
             if (y == 0 || y == height - 1 ||
                 x == 0 || x == width - 1) {
-//клетка в первой\последней строке || клетка в первом\последнем столбце
+//клетка в первой\последней строке И клетка в первом\последнем столбце
                 map[y][x] = '#';
             }
             else {
@@ -313,14 +313,18 @@ char** create_map(int height, int width) {
         for (int x = 1; x < width - 1; x++) {
             // заполняем внутренности
             if (rand() % 100 < 20) {
-            //остаток от деления на 100, то есть число от 0 до 99.
-            // < 20 потому что препятствие появится при числах от 0 до 19.(20%)
+                //остаток от деления на 100, то есть число от 0 до 99.
+                // < 20 потому что препятствие появится при числах от 0 до 19.(20%)
                 if (rand() % 2 == 0) {
                     map[y][x] = 'T';
                 }
                 else {
                     map[y][x] = 'R';
                 }
+
+            }
+            else if (rand() % 100 < 30) {
+                map[y][x] = '~';
             }
         }
     }
@@ -355,29 +359,93 @@ void free_map(char** map, int height) {
 
 // подземелье
 void dungeon_map(void) {
-
-    // случайные размеры от 5*5 до 30*30
+    //случайные размеры от 5*5 до 30*30
     int height = rand() % 26 + 5;
     int width = rand() % 26 + 5;
 
     printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
     printf("Размер карты: %d x %d\n", height, width);
-
     char** map = create_map(height, width);
 
     if (map == NULL) {
-        printf("Не удалось создать карту:(\n");
+        printf("Не удалось создать карту!\n");
         return;
     }
 
+    int player_x = rand() % (width - 2) + 1;
+    int player_y = rand() % (height - 2) + 1;
+
+    while (map[player_y][player_x] != '.') {
+        player_x = rand() % (width - 2) + 1;
+        player_y = rand() % (height - 2) + 1;
+    }
+
+    map[player_y][player_x] = '@';
+
     print_map(map, height, width);
 
-    printf("\nНажмите Enter, чтобы вернуться в меню...");
-    getchar();
+    char direction;
+
+    while (1) {
+
+        print_map(map, height, width);
+
+        printf("\nW/A/S/D - движение, Q - выход: ");
+
+        if (scanf(" %c", &direction) != 1) {
+            clear_input();
+            continue;
+        }
+
+        clear_input();
+
+        if (direction == 'Q' || direction == 'q') {
+            break;
+        }
+
+        if (move_player(map, height, width,
+            &player_x, &player_y, direction) == 0) {
+
+            printf("Туда пройти нельзя!\n");
+        }
+    }
 
     free_map(map, height);
-}
 
+}
+// движение wasd
+int move_player(char** map, int height, int weight, int* player_x, int* player_y, char direction){
+    int new_x = *player_x;
+    int new_y = *player_y;
+
+    if (direction == 'W' || direction == 'w') {
+        new_y--;
+    }
+    else if (direction == 'S' || direction == 's') {
+        new_y++;
+    }
+    else if (direction == 'A' || direction == 'a') {
+        new_x--;
+    }
+    else if (direction == 'D' || direction == 'd') {
+        new_x++;
+    }
+    //проверяем границы краты
+    if (map[new_y][new_x] == '#' || map[new_y][new_x] == 'T' || map[new_y][new_x] == 'R') {
+        return 0;
+    }
+    // убираем героя со старой клетки
+    map[*player_y][*player_x] = '.';
+
+    // обновляем координаты
+    *player_x = new_x;
+    *player_y = new_y;
+
+    // ставим героя на новую клетку
+    map[*player_y][*player_x] = '@';
+
+    return 1;
+}
 int main()
 {
     SetConsoleOutputCP(CP_UTF8);
