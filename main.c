@@ -378,6 +378,30 @@ int move_player(char** map, int height, int weight, int* player_x, int* player_y
     else {
         return 0;   // другая клавиша - никуда не идём
     }
+    // куда направлен ход (для скольжения)
+    int dx = new_x - *player_x;
+    int dy = new_y - *player_y;
+
+    //проверяем стены и препятствия
+    if (map[new_y][new_x] == '#' || map[new_y][new_x] == 'T' || map[new_y][new_x] == 'R') {
+        return 0;
+    }
+    // обновляем координаты
+    *player_x = new_x;
+    *player_y = new_y;
+
+    // лёд: пока стоим на '~', едем дальше в том же направлении
+    while (map[*player_y][*player_x] == '~') {
+        int next_x = *player_x + dx;
+        int next_y = *player_y + dy;
+
+        // впереди стена или препятствие - останавливаемся
+        if (map[next_y][next_x] == '#' || map[next_y][next_x] == 'T' || map[next_y][next_x] == 'R') {
+            break;
+        }
+        *player_x = next_x;
+        *player_y = next_y;
+    }
     return 1;
 }
 
