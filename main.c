@@ -3,11 +3,13 @@
 #include <windows.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <time.h>
 #define INV_SIZE 10
 #define MAX_ITEMS 10
 #define MAX_NAME_LEN 32
 #define MAX_FARMER_NAME 33
+#define MAP_MIN_SIZE 5
+#define MAP_MAX_SIZE 30
 
 // глобальные переменные (видны везде)
 char farmer_name[MAX_FARMER_NAME] = "Фермер";
@@ -333,14 +335,13 @@ char** create_map(int height, int width) {
 }
 
 
-// выводжим карту
-void print_map(char** map, int height, int width) {
-
+// выводим карту
+void print_map(char** map, int height, int width, int px, int py) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            printf("%c ", map[y][x]);
+            if (x == px && y == py) printf("@ ");
+            else printf("%c ", map[y][x]);
         }
-
         printf("\n");
     }
 }
@@ -355,7 +356,34 @@ void free_map(char** map, int height) {
 
     free(map);
 }
+// движение wasd
+int move_player(char** map, int height, int weight, int* player_x, int* player_y, char direction) {
+    int new_x = *player_x;
+    int new_y = *player_y;
 
+    if (direction == 'W' || direction == 'w') {
+        new_y--;
+    }
+    else if (direction == 'S' || direction == 's') {
+        new_y++;
+    }
+    else if (direction == 'A' || direction == 'a') {
+        new_x--;
+    }
+    else if (direction == 'D' || direction == 'd') {
+        new_x++;
+    }
+    //проверяем границы краты
+    if (map[new_y][new_x] == '#' || map[new_y][new_x] == 'T' || map[new_y][new_x] == 'R') {
+        return 0;
+    }
+    // обновляем координаты
+    *player_x = new_x;
+    *player_y = new_y;
+
+
+    return 1;
+}
 
 // подземелье
 void dungeon_map(void) {
@@ -380,15 +408,12 @@ void dungeon_map(void) {
         player_y = rand() % (height - 2) + 1;
     }
 
-    map[player_y][player_x] = '@';
-
-    print_map(map, height, width);
 
     char direction;
 
     while (1) {
 
-        print_map(map, height, width);
+        print_map(map, height, width, player_x, player_y);
 
         printf("\nW/A/S/D - движение, Q - выход: ");
 
@@ -412,42 +437,12 @@ void dungeon_map(void) {
 
     free_map(map, height);
 
+
 }
-// движение wasd
-int move_player(char** map, int height, int weight, int* player_x, int* player_y, char direction){
-    int new_x = *player_x;
-    int new_y = *player_y;
 
-    if (direction == 'W' || direction == 'w') {
-        new_y--;
-    }
-    else if (direction == 'S' || direction == 's') {
-        new_y++;
-    }
-    else if (direction == 'A' || direction == 'a') {
-        new_x--;
-    }
-    else if (direction == 'D' || direction == 'd') {
-        new_x++;
-    }
-    //проверяем границы краты
-    if (map[new_y][new_x] == '#' || map[new_y][new_x] == 'T' || map[new_y][new_x] == 'R') {
-        return 0;
-    }
-    // убираем героя со старой клетки
-    map[*player_y][*player_x] = '.';
-
-    // обновляем координаты
-    *player_x = new_x;
-    *player_y = new_y;
-
-    // ставим героя на новую клетку
-    map[*player_y][*player_x] = '@';
-
-    return 1;
-}
 int main()
-{
+{   
+    srand((unsigned int)time(NULL));
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
    
