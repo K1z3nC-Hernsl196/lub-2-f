@@ -1,6 +1,8 @@
 #ifndef PLAYER_H
 #define PLAYER_H
-
+#define START_HP 100
+#define START_STAMINA 50
+#define START_GOLD 0
 #define MAX_NAME_LEN    32
 #define BACKPACK_SLOTS  10
 
@@ -14,5 +16,8 @@ typedef struct {
     int x, y;
     int inventory[BACKPACK_SLOTS];
 } Player;
+
+Player* create_player(const char* name);
+void destroy_player(Player* p);
 
 #endif

@@ -493,10 +493,15 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 //тест
-    Player hero;
-    hero.gold = 10;
-    hero.hp = 100;
-    printf("Золото: %d, HP: %d\n", hero.gold, hero.hp);
+    Player* player = NULL;
+    player = create_player("Тест");
+    if (player == NULL) {
+        printf("Не хватило памяти\n");
+        return 1;
+    }
+    printf("%s: золото %d, HP %d/%d\n", player->name, player->gold, player->hp, player->max_hp);
+    destroy_player(player);
+    player = NULL;
 
 
     if (load_items(item_names) == 0) {
