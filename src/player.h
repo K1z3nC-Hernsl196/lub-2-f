@@ -1,5 +1,6 @@
 #ifndef PLAYER_H
 #define PLAYER_H
+#include "utils.h"   // нужен для типа GameTime
 #define START_HP 100
 #define START_STAMINA 50
 #define START_GOLD 0
@@ -19,5 +20,6 @@ typedef struct {
 
 Player* create_player(const char* name);
 void destroy_player(Player* p);
-
+void print_player(const Player* p);
+void sleep_player(Player* p, GameTime* t);   // только прототип, без тела!
 #endif

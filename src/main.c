@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include "player.h"
+#include "utils.h"
+
 #define INV_SIZE 10
 #define MAX_ITEMS 10
 #define MAX_NAME_LEN 32
@@ -65,11 +67,16 @@ void show_menu(void) {
 
 // все кейсы в функциях
 // 1 case время
+// старая show_time закомментирована, новая версия теперь в utils.c
+/*
 void show_time() {
     printf("Текущее время: День %d, %02d:00\n", current_day, current_hour);
 }
+*/
 
 // 2 case перемоать время
+// старая wait_hours закомментирована, новая версия (wait_time) теперь в utils.c
+/*
 void wait_hours() {
     int hours;
     printf("Сколько часов вы хотите потратить на работу? ");
@@ -91,11 +98,12 @@ void wait_hours() {
     }
     printf("Новое время: День %d, %02d:00\n", current_day, current_hour);
 }
+*/
 
 // 3 case инвентарь
 void show_inventory() {
     for (int i = 0; i < INV_SIZE; i++) {
-        printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]); 
+        printf("Слот %d: [%d] %s\n", i, inventory[i], item_names[inventory[i]]);
     }
 }
 
@@ -104,7 +112,8 @@ void put_item() {
     int slot, item_id;
     printf("Введите номер слота(0-9): ");
     if (scanf("%d", &slot) != 1) {
-        printf("Только числа!\n"); while (getchar() != '\n'); return;}
+        printf("Только числа!\n"); while (getchar() != '\n'); return;
+    }
     if (slot < 0 || slot >= INV_SIZE) { printf("Такого слота нет\n"); return; }
 
     printf("Введите ID предмета (0-9): ");
@@ -146,13 +155,6 @@ void remove_duplicates(void) {
     show_inventory();
 }
 
-// фун-я очистки остатков ввода
-void clear_input(void) { 
-    int c;
-
-    while ((c = getchar()) != '\n' && c != EOF) { //проверяет что это не конец строки И не конец входного потока
-    }                                             // return ненужен т.к. зач вообще нужны уловия тут??
-}
 //[7]
 void search_item(void) {
     char search_name[MAX_NAME_LEN];
@@ -162,10 +164,8 @@ void search_item(void) {
     if (scanf(" %31[^\n]", search_name) != 1) {
         printf("Не удалось прочитать название.\n");
         clear_input();
-        return; 
+        return;
     }
-
-    clear_input();
 
     for (int i = 0; i < MAX_ITEMS; i++) {
         if (strcmp(item_names[i], search_name) == 0) {
@@ -218,7 +218,7 @@ void nps_dialogs(void) {
         printf("Не удалось открыть input.txt\n");
         return;
     }
-                            // write режим записи
+    // write режим записи
     FILE* output = fopen("output.txt", "w"); // output  Готовый персонализированный текст письма по заданию
 
     if (output == NULL) {
@@ -229,7 +229,7 @@ void nps_dialogs(void) {
     // сhar хранит симв.
     char line[1024]; // массивчик для считывания текста из файла
     char day_text[16];// масив для номера для в виде строки т.к. current_day целое число а нужен текст
-            //куда запис, размер буфера, итд крч
+    //куда запис, размер буфера, итд крч
     snprintf(day_text, sizeof(day_text), "%d", current_day); // преобраз числор в текст
 
     printf("\n--- NPC Диалог ---\n");
@@ -237,10 +237,10 @@ void nps_dialogs(void) {
             //просто масив, макс. размер считыв. данных и откуда читаем
     while (fgets(line, sizeof(line), input) != NULL) {
         const char* p = line;
-                 // ^ просто указать на  текущ. позицию в строке
+        // ^ просто указать на  текущ. позицию в строке
         while (*p != '\0') {
             if (strncmp(p, "<NAME>", 6) == 0) { // если текст начинается с NAME пишет имя фер. если нет копирует тек. симв как есть
-                fprintf(output, "%s", farmer_name); 
+                fprintf(output, "%s", farmer_name);
                 printf("%s", farmer_name);
                 p += 6; // перемещаем указатель на 6 симв. ЗА шаблон т.к. программа начнет обрабатывать NAME повторно
             }
@@ -254,7 +254,7 @@ void nps_dialogs(void) {
                 printf("%s", item_names[inventory[0]]);
                 p += 6;
             } // все тоже самое как и выше
-            else { 
+            else {
                 fputc(*p, output); // записываем тек.сим в файл
                 putchar(*p); // выводим его на экран
                 p++; // передвигаем на следущ симв
@@ -303,7 +303,7 @@ char** create_map(int height, int width) {
 
             if (y == 0 || y == height - 1 ||
                 x == 0 || x == width - 1) {
-//клетка в первой\последней строке И клетка в первом\последнем столбце
+                //клетка в первой\последней строке И клетка в первом\последнем столбце
                 map[y][x] = '#';
             }
             else {
@@ -313,7 +313,7 @@ char** create_map(int height, int width) {
     }
 
     // препятствия
-    for (int y = 1; y < height - 1; y++) { 
+    for (int y = 1; y < height - 1; y++) {
         for (int x = 1; x < width - 1; x++) {
             // заполняем внутренности
             if (rand() % 100 < 20) {
@@ -487,78 +487,162 @@ void dungeon_map(void) {
     free_map(map, height);
 }
 
-int main()
-{   
-    srand((unsigned int)time(NULL));
+
+
+
+// ИЗМЕНЕНО: добавлены пункты MENU_TIME, MENU_WAIT, MENU_SLEEP
+enum MenuItem {
+    MENU_EXIT = 0,
+    MENU_CREATE,
+    MENU_CARD,
+    MENU_TIME,
+    MENU_WAIT,
+    MENU_SLEEP
+};
+
+#define NAME_PROMPT "Введите имя героя: "
+
+static void create_or_recreate(Player** player) {
+    if (*player != NULL) {
+        int sure = read_int("Герой уже есть. Удалить его? (1 - да, 0 - нет): ", 0, 1);
+        if (!sure) {
+            return;
+        }
+        destroy_player(*player);
+        *player = NULL;
+    }
+    char name[MAX_NAME_LEN];
+    read_line(NAME_PROMPT, name, MAX_NAME_LEN);
+    *player = create_player(name);
+    if (*player == NULL) {
+        printf("Не хватило памяти!\n");
+    }
+    else {
+        printf("Герой создан!\n");
+    }
+}
+
+int main(void) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
-//тест
+    srand((unsigned int)time(NULL));
+
     Player* player = NULL;
-    player = create_player("Тест");
-    if (player == NULL) {
-        printf("Не хватило памяти\n");
-        return 1;
-    }
-    printf("%s: золото %d, HP %d/%d\n", player->name, player->gold, player->hp, player->max_hp);
-    destroy_player(player);
-    player = NULL;
-
-
-    if (load_items(item_names) == 0) {
-        printf("items.txt не найден. Используем стандартные названия.\n");
-        set_default_items(item_names);
-    }
-    printf("Введите имя фермера: ");
-    if (fgets(farmer_name, sizeof(farmer_name), stdin) != NULL) {
-        farmer_name[strcspn(farmer_name, "\n")] = '\0';
-
-        if (strlen(farmer_name) == 0) {
-            strcpy(farmer_name, "Фермер");
-        }
-    }
+    GameTime game_time = { START_DAY, MORNING_HOUR };   // ДОБАВЛЕНО: время игры
     int running = 1;
-    int choice;
 
-    while (running)
-    {
-        show_menu();
-
-        if (scanf("%d", &choice) != 1) {
-            printf("Какие буквы? Только числа.\n");
-            while (getchar() != '\n');
-            continue;
-        }
-        while (getchar() != '\n');
-
-        switch (choice)
-        {
-        case 0: 
-            running = 0; 
+    while (running) {
+        // ИЗМЕНЕНО: добавлены пункты [3] Часы, [4] Ждать, [5] Спать
+        printf("\n[1] Создать героя\n[2] Карточка\n[3] Часы\n[4] Ждать\n[5] Спать\n[0] Выход\n");
+        int choice = read_int("Выберите действие: ", MENU_EXIT, MENU_SLEEP);
+        switch (choice) {
+        case MENU_EXIT:
+            running = 0;
             break;
-        case 1: 
-            show_time(); break;
-        case 2: 
-            wait_hours(); break;
-        case 3: 
-            show_inventory();break;
-        case 4: 
-            put_item(); break;
-        case 5: 
-            discard_item(); break;
-        case 6: 
-            remove_duplicates(); break;
-        case 7:
-            search_item(); break;
-        case 8:
-            save_diary(); break;
-        case 9:
-            nps_dialogs(); break;
-        case 10:
-            dungeon_map(); break;
-        default:
-            printf("Такого пункта в меню нет.\n");
+        case MENU_CREATE:
+            create_or_recreate(&player);
+            break;
+        case MENU_CARD:
+            if (player == NULL) {
+                printf("Сначала создайте героя!\n");
+            }
+            else {
+                print_player(player);
+                show_time(&game_time);   // ДОБАВЛЕНО: время в карточке
+            }
+            break;
+            // ДОБАВЛЕНО: новые пункты меню
+        case MENU_TIME:
+            show_time(&game_time);
+            break;
+        case MENU_WAIT:
+            wait_time(&game_time);
+            break;
+        case MENU_SLEEP:
+            if (player == NULL) {
+                printf("Сначала создайте героя!\n");
+            }
+            else {
+                sleep_player(player, &game_time);
+            }
             break;
         }
     }
+    destroy_player(player);
     return 0;
 }
+//int main()
+//{   
+//    srand((unsigned int)time(NULL));
+//    SetConsoleOutputCP(CP_UTF8);
+//    SetConsoleCP(CP_UTF8);
+////тест
+//    Player* player = NULL;
+//player = create_player("Тест");
+//if (player == NULL) {
+//    printf("Не хватило памяти\n");
+//    return 1;
+//}
+//printf("%s: золото %d, HP %d/%d\n", player->name, player->gold, player->hp, player->max_hp);
+//destroy_player(player);
+//player = NULL;
+//
+//
+//    if (load_items(item_names) == 0) {
+//        printf("items.txt не найден. Используем стандартные названия.\n");
+//        set_default_items(item_names);
+//    }
+//    printf("Введите имя фермера: ");
+//    if (fgets(farmer_name, sizeof(farmer_name), stdin) != NULL) {
+//        farmer_name[strcspn(farmer_name, "\n")] = '\0';
+//
+//        if (strlen(farmer_name) == 0) {
+//            strcpy(farmer_name, "Фермер");
+//        }
+//    }
+//    int running = 1;
+//    int choice;
+//
+//    while (running)
+//    {
+//        show_menu();
+//
+//        if (scanf("%d", &choice) != 1) {
+//            printf("Какие буквы? Только числа.\n");
+//            while (getchar() != '\n');
+//            continue;
+//        }
+//        while (getchar() != '\n');
+//
+//        switch (choice)
+//        {
+//        case 0: 
+//            running = 0; 
+//            break;
+//        case 1: 
+//            show_time(); break;
+//        case 2: 
+//            wait_hours(); break;
+//        case 3: 
+//            show_inventory();break;
+//        case 4: 
+//            put_item(); break;
+//        case 5: 
+//            discard_item(); break;
+//        case 6: 
+//            remove_duplicates(); break;
+//        case 7:
+//            search_item(); break;
+//        case 8:
+//            save_diary(); break;
+//        case 9:
+//            nps_dialogs(); break;
+//        case 10:
+//            dungeon_map(); break;
+//        default:
+//            printf("Такого пункта в меню нет.\n");
+//            break;
+//        }
+//    }
+//    return 0;
+//}
