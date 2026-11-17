@@ -6,14 +6,13 @@
 #include <time.h>
 #include "player.h"
 #include "utils.h"
+#include "map.h"
 
 #define INV_SIZE 10
 #define MAX_ITEMS 10
 #define MAX_NAME_LEN 32
 #define MAX_FARMER_NAME 33
-#define MAP_MIN_SIZE 5
-#define MAP_SIZE_RANGE 26
-#define ICE_CHANCE 15
+
 
 // глобальные переменные (видны везде)
 char farmer_name[MAX_FARMER_NAME] = "Фермер";
@@ -268,12 +267,11 @@ void nps_dialogs(void) {
     printf("\n==Диалог сохранён в output.txt==\n");
 }
 
-
-// Создание карты
+/*// Создание карты
 char** create_map(int height, int width) {
 
     // Выделяем память под указатели на строки
-    // map будет хранить адрес участка памяти, в котором находятся указатели на строки карты 
+    // map будет хранить адрес участка памяти, в котором находятся указатели на строки карты
     char** map = malloc(height * sizeof(char*));
 
     if (map == NULL) {
@@ -485,12 +483,10 @@ void dungeon_map(void) {
     }
 
     free_map(map, height);
-}
+}*/
 
 
-
-
-// ИЗМЕНЕНО: добавлены пункты MENU_TIME, MENU_WAIT, MENU_SLEEP
+//добавлены пункты MENU_TIME, MENU_WAIT, MENU_SLEEP
 enum MenuItem {
     MENU_EXIT = 0,
     MENU_CREATE,
@@ -527,8 +523,19 @@ int main(void) {
     SetConsoleCP(CP_UTF8);
     srand((unsigned int)time(NULL));
 
+    // ТЕСТ карты (потом удалим)
+    Player test_player;
+    Map* test_map = create_map(1, &test_player);
+    if (test_map == NULL) {
+        printf("Не удалось создать карту\n");
+        return 1;
+    }
+    print_map(test_map, test_player.x, test_player.y);
+    destroy_map(test_map);
+    // конец теста
+
     Player* player = NULL;
-    GameTime game_time = { START_DAY, MORNING_HOUR };   // ДОБАВЛЕНО: время игры
+    GameTime game_time = { START_DAY, MORNING_HOUR };   //время игры
     int running = 1;
 
     while (running) {
@@ -548,10 +555,10 @@ int main(void) {
             }
             else {
                 print_player(player);
-                show_time(&game_time);   // ДОБАВЛЕНО: время в карточке
+                show_time(&game_time);   //время в карточке
             }
             break;
-            // ДОБАВЛЕНО: новые пункты меню
+            //новые пункты меню
         case MENU_TIME:
             show_time(&game_time);
             break;
