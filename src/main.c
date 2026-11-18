@@ -7,6 +7,7 @@
 #include "player.h"
 #include "utils.h"
 #include "map.h"
+#include "adventure.h"
 
 #define INV_SIZE 10
 #define MAX_ITEMS 10
@@ -63,41 +64,6 @@ void show_menu(void) {
         "Выберите действие: ", farmer_name);
 }
 
-
-// все кейсы в функциях
-// 1 case время
-// старая show_time закомментирована, новая версия теперь в utils.c
-/*
-void show_time() {
-    printf("Текущее время: День %d, %02d:00\n", current_day, current_hour);
-}
-*/
-
-// 2 case перемоать время
-// старая wait_hours закомментирована, новая версия (wait_time) теперь в utils.c
-/*
-void wait_hours() {
-    int hours;
-    printf("Сколько часов вы хотите потратить на работу? ");
-    if (scanf("%d", &hours) != 1) {
-        printf("Какие буквы? Только числа.\n");
-        while (getchar() != '\n');
-        return;
-    }
-    while (getchar() != '\n');
-
-    if (hours < 0) {
-        printf("Количество часов не может быть отрицательным!\n");
-        return;
-    }
-    current_hour += hours;
-    while (current_hour >= 24) {
-        current_hour -= 24;
-        current_day++;
-    }
-    printf("Новое время: День %d, %02d:00\n", current_day, current_hour);
-}
-*/
 
 // 3 case инвентарь
 void show_inventory() {
@@ -267,233 +233,15 @@ void nps_dialogs(void) {
     printf("\n==Диалог сохранён в output.txt==\n");
 }
 
-/*// Создание карты
-char** create_map(int height, int width) {
 
-    // Выделяем память под указатели на строки
-    // map будет хранить адрес участка памяти, в котором находятся указатели на строки карты
-    char** map = malloc(height * sizeof(char*));
-
-    if (map == NULL) {
-        return NULL;
-    }
-
-    // выделяем память под каждую строку
-    for (int i = 0; i < height; i++) {
-
-        map[i] = malloc(width * sizeof(char));
-
-        if (map[i] == NULL) {
-
-            // освобождаем уже созданные строки если че то пошло нетак
-            for (int j = 0; j < i; j++) {
-                free(map[j]); // освобождаем память дивианта
-            }
-
-            free(map); // и массив указателей
-            return NULL;
-        }
-    }
-
-    // границы и внутр. часть
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-
-            if (y == 0 || y == height - 1 ||
-                x == 0 || x == width - 1) {
-                //клетка в первой\последней строке И клетка в первом\последнем столбце
-                map[y][x] = '#';
-            }
-            else {
-                map[y][x] = '.';
-            }
-        }
-    }
-
-    // препятствия
-    for (int y = 1; y < height - 1; y++) {
-        for (int x = 1; x < width - 1; x++) {
-            // заполняем внутренности
-            if (rand() % 100 < 20) {
-                //остаток от деления на 100, то есть число от 0 до 99.
-                // < 20 потому что препятствие появится при числах от 0 до 19.(20%)
-                if (rand() % 2 == 0) {
-                    map[y][x] = 'T';
-                }
-                else {
-                    map[y][x] = 'R';
-                }
-
-            }
-            else if (rand() % 100 < ICE_CHANCE) {
-                map[y][x] = '~';
-            }
-        }
-    }
-
-    return map;
-}
-
-
-// выводим карту
-void print_map(char** map, int height, int width, int px, int py) {
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            if (x == px && y == py) printf("@ ");
-            else printf("%c ", map[y][x]);
-        }
-        printf("\n");
-    }
-}
-
-
-// освобождение памяти
-void free_map(char** map, int height) {
-
-    for (int i = 0; i < height; i++) {
-        free(map[i]);
-    }
-
-    free(map);
-}
-
-// движение wasd
-int move_player(char** map, int height, int weight, int* player_x, int* player_y, char direction) {
-    int new_x = *player_x;
-    int new_y = *player_y;
-
-    if (direction == 'W' || direction == 'w') {
-        new_y--;
-    }
-    else if (direction == 'S' || direction == 's') {
-        new_y++;
-    }
-    else if (direction == 'A' || direction == 'a') {
-        new_x--;
-    }
-    else if (direction == 'D' || direction == 'd') {
-        new_x++;
-    }
-    else {
-        return 0;   // другая клавиша - никуда не идём
-    }
-    // куда направлен ход (для скольжения)
-    int dx = new_x - *player_x;
-    int dy = new_y - *player_y;
-
-    //проверяем стены и препятствия
-    if (map[new_y][new_x] == '#' || map[new_y][new_x] == 'T' || map[new_y][new_x] == 'R') {
-        return 0;
-    }
-    // обновляем координаты
-    *player_x = new_x;
-    *player_y = new_y;
-
-    // лёд: пока стоим на '~', едем дальше в том же направлении
-    while (map[*player_y][*player_x] == '~') {
-        int next_x = *player_x + dx;
-        int next_y = *player_y + dy;
-
-        // впереди стена или препятствие - останавливаемся
-        if (map[next_y][next_x] == '#' || map[next_y][next_x] == 'T' || map[next_y][next_x] == 'R') {
-            break;
-        }
-        *player_x = next_x;
-        *player_y = next_y;
-    }
-    return 1;
-}
-
-// создает этаж: карта + лестница D + герой + лестница U рядом
-char** new_floor(int* height, int* width, int* px, int* py) {
-    *height = rand() % MAP_SIZE_RANGE + MAP_MIN_SIZE;
-    *width = rand() % MAP_SIZE_RANGE + MAP_MIN_SIZE;
-
-    char** map = create_map(*height, *width);
-    if (map == NULL) {
-        return NULL;
-    }
-
-    // лестница вниз D на случайной свободной клетке
-    int x, y;
-    do {
-        x = rand() % (*width - 2) + 1;
-        y = rand() % (*height - 2) + 1;
-    } while (map[y][x] != '.');
-    map[y][x] = 'D';
-
-    // герой: клетка '.', и справа от неё тоже '.', туда поставим U
-    do {
-        *px = rand() % (*width - 2) + 1;
-        *py = rand() % (*height - 2) + 1;
-    } while (map[*py][*px] != '.' || map[*py][*px + 1] != '.');
-    map[*py][*px + 1] = 'U';
-
-    return map;
-}
-
-// подземелье
-void dungeon_map(void) {
-    int height, width, player_x, player_y;
-    int depth = 1;   // номер этажа
-
-    char** map = new_floor(&height, &width, &player_x, &player_y);
-    if (map == NULL) {
-        printf("Не удалось создать карту!\n");
-        return;
-    }
-
-    printf("\n=== ПОДЗЕМЕЛЬЕ ===\n");
-
-    char direction;
-
-    while (1) {
-        printf("\nЭтаж: %d, размер карты: %d x %d\n", depth, height, width);
-        print_map(map, height, width, player_x, player_y);
-
-        printf("\nW/A/S/D - движение, Q - домой (только на лестнице U): ");
-
-        if (scanf(" %c", &direction) != 1) {
-            clear_input();
-            continue;
-        }
-        clear_input();
-
-        if (direction == 'Q' || direction == 'q') {
-            if (map[player_y][player_x] == 'U') {
-                break;
-            }
-            printf("Домой можно уйти только с лестницы U!\n");
-            continue;
-        }
-
-        if (move_player(map, height, width, &player_x, &player_y, direction) == 0) {
-            printf("Туда пройти нельзя!\n");
-        }
-        else if (map[player_y][player_x] == 'D') {
-            free_map(map, height);   // старый этаж удаляем
-            depth++;
-            map = new_floor(&height, &width, &player_x, &player_y);
-            if (map == NULL) {
-                printf("Не удалось создать этаж!\n");
-                return;
-            }
-            printf("Вы спустились на этаж %d!\n", depth);
-        }
-    }
-
-    free_map(map, height);
-}*/
-
-
-//добавлены пункты MENU_TIME, MENU_WAIT, MENU_SLEEP
 enum MenuItem {
     MENU_EXIT = 0,
     MENU_CREATE,
     MENU_CARD,
     MENU_TIME,
     MENU_WAIT,
-    MENU_SLEEP
+    MENU_SLEEP,
+    MENU_ADVENTURE
 };
 
 #define NAME_PROMPT "Введите имя героя: "
@@ -523,54 +271,58 @@ int main(void) {
     SetConsoleCP(CP_UTF8);
     srand((unsigned int)time(NULL));
 
-    // ТЕСТ карты (потом удалим)
-    Player test_player;
-    Map* test_map = create_map(1, &test_player);
-    if (test_map == NULL) {
-        printf("Не удалось создать карту\n");
-        return 1;
-    }
-    print_map(test_map, test_player.x, test_player.y);
-    destroy_map(test_map);
-    // конец теста
-
     Player* player = NULL;
     GameTime game_time = { START_DAY, MORNING_HOUR };   //время игры
     int running = 1;
 
     while (running) {
-        // ИЗМЕНЕНО: добавлены пункты [3] Часы, [4] Ждать, [5] Спать
-        printf("\n[1] Создать героя\n[2] Карточка\n[3] Часы\n[4] Ждать\n[5] Спать\n[0] Выход\n");
-        int choice = read_int("Выберите действие: ", MENU_EXIT, MENU_SLEEP);
+     
+        printf("\n[1] Создать героя\n[2] Карточка\n[3] Часы\n[4] Ждать\n[5] Спать\n[6] Поход\n[0] Выход\n");
+        int choice = read_int("Выберите действие: ", MENU_EXIT, MENU_ADVENTURE);
+
         switch (choice) {
+
         case MENU_EXIT:
             running = 0;
             break;
+
         case MENU_CREATE:
             create_or_recreate(&player);
             break;
+
         case MENU_CARD:
             if (player == NULL) {
                 printf("Сначала создайте героя!\n");
             }
             else {
                 print_player(player);
-                show_time(&game_time);   //время в карточке
+                show_time(&game_time); 
             }
             break;
-            //новые пункты меню
+
         case MENU_TIME:
             show_time(&game_time);
             break;
+
         case MENU_WAIT:
             wait_time(&game_time);
             break;
+
         case MENU_SLEEP:
             if (player == NULL) {
                 printf("Сначала создайте героя!\n");
             }
             else {
                 sleep_player(player, &game_time);
+            }
+            break;
+
+        case MENU_ADVENTURE:
+            if (player == NULL) {
+                printf("Сначала создайте героя!\n");
+            }
+            else {
+                start_adventure(player, &game_time);
             }
             break;
         }

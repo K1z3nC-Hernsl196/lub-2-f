@@ -29,5 +29,6 @@ typedef struct {
 Map* create_map(int floor, Player* p);
 void destroy_map(Map* m);
 void print_map(const Map* m, int px, int py);
+int move_player(const Map* m, Player* p, char direction);
 
 #endif
