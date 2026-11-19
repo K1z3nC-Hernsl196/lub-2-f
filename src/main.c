@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "map.h"
 #include "adventure.h"
+#include "backpack.h"
 
 #define INV_SIZE 10
 #define MAX_ITEMS 10
@@ -241,7 +242,17 @@ enum MenuItem {
     MENU_TIME,
     MENU_WAIT,
     MENU_SLEEP,
-    MENU_ADVENTURE
+    MENU_ADVENTURE,
+    MENU_INVENTORY
+};
+
+enum InventoryItem {
+    INV_BACK = 0,
+    INV_SHOW,
+    INV_PUT,
+    INV_DISCARD,
+    INV_DEDUP,
+    INV_POUCH
 };
 
 #define NAME_PROMPT "Введите имя героя: "
@@ -266,6 +277,54 @@ static void create_or_recreate(Player** player) {
     }
 }
 
+static void put_into_backpack(Player* p) {
+    int slot = read_int("Номер слота (0-9): ", 0, BACKPACK_SLOTS - 1);
+    int id = read_int("ID предмета (0-9): ", 0, ItemCount - 1);
+    backpack_put(&p->backpack, slot, id);
+    printf("Предмет %s лежит в слоте %d.\n", item_name(id), slot);
+}
+
+static void discard_from_backpack(Player* p) {
+    int slot = read_int("Номер слота (0-9): ", 0, BACKPACK_SLOTS - 1);
+    backpack_remove(&p->backpack, slot);
+    printf("Слот %d очищен.\n", slot);
+}
+
+static void inventory_menu(Player* player) {
+    int back = 0;
+    while (!back) {
+        printf("\n--- ИНВЕНТАРЬ ---\n"
+            "[1] Показать\n"
+            "[2] Положить предмет\n"
+            "[3] Выбросить предмет\n"
+            "[4] Убрать повторы\n"
+            "[5] Купить подсумок (%d золота)\n"
+            "[0] Назад\n", POUCH_COST);
+        int choice = read_int("Выберите действие: ", INV_BACK, INV_POUCH);
+        switch (choice) {
+        case INV_BACK:
+            back = 1;
+            break;
+        case INV_SHOW:
+            backpack_print(&player->backpack);
+            break;
+        case INV_PUT:
+            put_into_backpack(player);
+            break;
+        case INV_DISCARD:
+            discard_from_backpack(player);
+            break;
+        case INV_DEDUP:
+            backpack_remove_duplicates(&player->backpack);
+            backpack_print(&player->backpack);
+            break;
+        case INV_POUCH:
+            buy_pouch(player);
+            break;
+        }
+    }
+}
+
 int main(void) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
@@ -276,9 +335,9 @@ int main(void) {
     int running = 1;
 
     while (running) {
-     
-        printf("\n[1] Создать героя\n[2] Карточка\n[3] Часы\n[4] Ждать\n[5] Спать\n[6] Поход\n[0] Выход\n");
-        int choice = read_int("Выберите действие: ", MENU_EXIT, MENU_ADVENTURE);
+
+        printf("\n[1] Создать героя\n[2] Карточка\n[3] Часы\n[4] Ждать\n[5] Спать\n[6] Поход\n[7] Инвентарь\n[0] Выход\n");
+        int choice = read_int("Выберите действие: ", MENU_EXIT, MENU_INVENTORY);
 
         switch (choice) {
 
@@ -296,7 +355,7 @@ int main(void) {
             }
             else {
                 print_player(player);
-                show_time(&game_time); 
+                show_time(&game_time);
             }
             break;
 
@@ -325,11 +384,21 @@ int main(void) {
                 start_adventure(player, &game_time);
             }
             break;
+
+        case MENU_INVENTORY:
+            if (player == NULL) {
+                printf("Сначала создайте героя!\n");
+            }
+            else {
+                inventory_menu(player);
+            }
+            break;
         }
     }
     destroy_player(player);
     return 0;
 }
+
 //int main()
 //{   
 //    srand((unsigned int)time(NULL));

@@ -7,7 +7,7 @@
 #define FLOOR_TIME_COST     1    // часов на переход
 #define GOLD_BASE_REWARD    10   // базовый множитель награды
 #define GOLD_LOSS_DIVIDER   2    // при обмороке теряем 1/2 золота
-
+#define STEP_STAMINA_OVERLOAD 3  // шаг при перегрузе
 
 // функция проверки возможности начать приключение
 static int can_start(const Player* p, const GameTime* t) {
@@ -27,16 +27,18 @@ static int can_start(const Player* p, const GameTime* t) {
 // функция для вывода текущего состояния игрока и игрового времени
 // const только считывает данные, но не меняет их
 static void print_hud(const Player* p, const Map* m, const GameTime* t) {
-    printf("\nHP: %d/%d | Выносливость: %d/%d | Золото: %d | Этаж: %d | Время: %02d:00\n",
+    printf("\nHP: %d/%d | Выносливость: %d/%d | Золото: %d | Этаж: %d | Время: %02d:00 | Вес: %d/%d (%s)\n",
         p->hp,
         p->max_hp,
         p->stamina,
         p->max_stamina,
         p->gold,
         m->floor,
-        t->hour);
+        t->hour,
+        p->backpack.total_weight,
+        p->backpack.max_capacity,
+        load_state_name(p->backpack.state));
 }
-
 
 // функция для уменьшения выносливости игрока
 // принимает указатель Player и количество выносливости которое нужно потратить
@@ -45,6 +47,13 @@ static void spend_stamina(Player* p, int amount) {
     if (p->stamina < 0) {
         p->stamina = 0;
     }
+}
+// стоимость шага зависит от загрузки рюкзака
+static int step_cost(const Player* p) {
+    if (p->backpack.state == LOAD_OVERLOAD) {
+        return STEP_STAMINA_OVERLOAD;
+    }
+    return STEP_STAMINA_COST;
 }
 
 // функция проверки: закончились силы или наступила ночь
@@ -137,7 +146,7 @@ void start_adventure(Player* player, GameTime* time) {
         }
 
         // если игрок успешно переместился, уменьшаем его выносливость на стоимость одного шага
-        spend_stamina(player, STEP_STAMINA_COST);
+        spend_stamina(player, step_cost(player));
 
         if (map->cells[player->y][player->x] == CELL_DOWN) {
 

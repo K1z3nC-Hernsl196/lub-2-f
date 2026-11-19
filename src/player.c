@@ -19,9 +19,7 @@ Player* create_player(const char* name) { //выделяем память под
     p->gold = START_GOLD;
     p->x = 0;
     p->y = 0;
-    for (int i = 0; i < BACKPACK_SLOTS; i++) {
-        p->inventory[i] = 0;
-    }
+    backpack_init(&p->backpack);
     return p;
 }
 
@@ -39,10 +37,8 @@ void print_player(const Player* p) {
     printf("HP: %d/%d\n", p->hp, p->max_hp);
     printf("Выносливость: %d/%d\n", p->stamina, p->max_stamina);
     printf("Золото: %d\n", p->gold);
-    printf("Инвентарь:\n");
-    for (int i = 0; i < BACKPACK_SLOTS; i++) {
-        printf("  Слот %d: предмет %d\n", i, p->inventory[i]);
-    }
+    printf("Рюкзак:\n");
+    backpack_print(&p->backpack);
 }
 
 void sleep_player(Player* p, GameTime* t) {
@@ -51,4 +47,20 @@ void sleep_player(Player* p, GameTime* t) {
     p->hp = p->max_hp;
     p->stamina = p->max_stamina;
     printf("Вы выспались. Новый день: %d, %02d:00. HP и выносливость восстановлены.\n", t->day, t->hour);
+}
+
+// покупка подсумка
+void buy_pouch(Player* p) {
+
+    if (p->gold < POUCH_COST) {
+        printf("Не хватает золота: подсумок стоит %d, у вас %d.\n",
+            POUCH_COST, p->gold);
+        return;
+    }
+    p->gold -= POUCH_COST;
+
+    backpack_add_capacity(&p->backpack, POUCH_CAPACITY);
+
+    printf("Подсумок куплен! Грузоподъёмность: %d. Золото: %d.\n",
+        p->backpack.max_capacity, p->gold);
 }
