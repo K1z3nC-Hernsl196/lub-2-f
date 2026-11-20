@@ -20,7 +20,7 @@ typedef struct {
 
 Player* create_player(const char* name);
 void destroy_player(Player* p);
-void print_player(const Player* p);
+void print_player(const Player* p, const ItemCatalog* c);
 void sleep_player(Player* p, GameTime* t);
 void buy_pouch(Player* p);
 #endif

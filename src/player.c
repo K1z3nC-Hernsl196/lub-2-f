@@ -31,14 +31,14 @@ void destroy_player(Player* p) {
     free(p);
 }
 
-void print_player(const Player* p) {
+void print_player(const Player* p, const ItemCatalog* c) {
     printf("\n=== КАРТОЧКА ПЕРСОНАЖА ===\n");
     printf("Имя: %s\n", p->name);
     printf("HP: %d/%d\n", p->hp, p->max_hp);
     printf("Выносливость: %d/%d\n", p->stamina, p->max_stamina);
     printf("Золото: %d\n", p->gold);
     printf("Рюкзак:\n");
-    backpack_print(&p->backpack);
+    backpack_print(&p->backpack, c);
 }
 
 void sleep_player(Player* p, GameTime* t) {

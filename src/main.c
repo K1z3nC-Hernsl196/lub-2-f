@@ -276,12 +276,16 @@ static void create_or_recreate(Player** player) {
         printf("Герой создан!\n");
     }
 }
-
-static void put_into_backpack(Player* p) {
+//положить предмет(+отображаються список премдетов)
+static void put_into_backpack(Player* p, const ItemCatalog* catalog) {
+    printf("Предметы:\n");
+    for (int i = 0; i < ItemCount; i++) {
+        printf("  [%d] %s (вес %d)\n", i, item_name(catalog, i), item_weight(i));
+    }
     int slot = read_int("Номер слота (0-9): ", 0, BACKPACK_SLOTS - 1);
-    int id = read_int("ID предмета (0-9): ", 0, ItemCount - 1);
+    int id = read_int("ID предмета: ", 0, ItemCount - 1);
     backpack_put(&p->backpack, slot, id);
-    printf("Предмет %s лежит в слоте %d.\n", item_name(id), slot);
+    printf("Предмет %s лежит в слоте %d.\n", item_name(catalog, id), slot);
 }
 
 static void discard_from_backpack(Player* p) {
@@ -290,7 +294,7 @@ static void discard_from_backpack(Player* p) {
     printf("Слот %d очищен.\n", slot);
 }
 
-static void inventory_menu(Player* player) {
+static void inventory_menu(Player* player, const ItemCatalog* catalog) {
     int back = 0;
     while (!back) {
         printf("\n--- ИНВЕНТАРЬ ---\n"
@@ -306,17 +310,17 @@ static void inventory_menu(Player* player) {
             back = 1;
             break;
         case INV_SHOW:
-            backpack_print(&player->backpack);
+            backpack_print(&player->backpack, catalog);
             break;
         case INV_PUT:
-            put_into_backpack(player);
+            put_into_backpack(player, catalog);
             break;
         case INV_DISCARD:
             discard_from_backpack(player);
             break;
         case INV_DEDUP:
             backpack_remove_duplicates(&player->backpack);
-            backpack_print(&player->backpack);
+            backpack_print(&player->backpack, catalog);
             break;
         case INV_POUCH:
             buy_pouch(player);
@@ -329,6 +333,8 @@ int main(void) {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
     srand((unsigned int)time(NULL));
+    ItemCatalog catalog;
+    catalog_init(&catalog);
 
     Player* player = NULL;
     GameTime game_time = { START_DAY, MORNING_HOUR };   //время игры
@@ -354,7 +360,7 @@ int main(void) {
                 printf("Сначала создайте героя!\n");
             }
             else {
-                print_player(player);
+                print_player(player, &catalog);
                 show_time(&game_time);
             }
             break;
@@ -390,7 +396,7 @@ int main(void) {
                 printf("Сначала создайте героя!\n");
             }
             else {
-                inventory_menu(player);
+                inventory_menu(player, &catalog);
             }
             break;
         }

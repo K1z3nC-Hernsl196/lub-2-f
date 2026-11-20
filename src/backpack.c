@@ -1,31 +1,83 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <string.h>
 #include "backpack.h"
+
+// веса предметов (константа, менять её нельзя)
+static const int weights[ItemCount] = {
+    [Empty] = WEIGHT_EMPTY,
+    [Wood] = WEIGHT_WOOD,
+    [Stone] = WEIGHT_STONE,
+    [Seeds] = WEIGHT_SEEDS,
+    [Carrot] = WEIGHT_CARROT,
+    [WaterBucket] = WEIGHT_WATER_BUCKET,
+    [Soil] = WEIGHT_SOIL,
+    [Fish] = WEIGHT_FISH,
+    [FishingRod] = WEIGHT_FISHING_ROD,
+    [Shovel] = WEIGHT_SHOVEL
+};
 
 //определения веса предмета по его идентификатору
 int item_weight(int item_id) {
-    // статический массив, в котором хранятся веса всех предметов
-    static const int weights[ItemCount] = { 0, 3, 5, 1, 1, 4, 4, 2, 3, 4 };
     // проверяем, входит ли идентификатор предмета в допустимый диапазон
     if (item_id < 0 || item_id >= ItemCount) {
         return 0;
     }
-    // если все нром возвращаем вес предмета из масива по индек.
     return weights[item_id];
+}
+
+
+// читает названия из файла: 1 - успех, 0 - файла нет или он неполный
+static int load_names_from_file(ItemCatalog* c) {
+    FILE* f = fopen(ITEMS_FILE, "r");
+    if (f == NULL) {
+        return 0;
+    }
+    for (int i = 0; i < ItemCount; i++) {
+        if (fgets(c->names[i], ITEM_NAME_LEN, f) == NULL) {
+            fclose(f);
+            return 0;
+        }
+        // убираем перевод строки, храним только название
+        c->names[i][strcspn(c->names[i], "\r\n")] = '\0';
+        if (c->names[i][0] == '\0') {
+            fclose(f);
+            return 0;
+        }
+    }
+    fclose(f);
+    return 1;
+}
+
+
+// стандартные названия, если файла нет
+static void set_default_names(ItemCatalog* c) {
+    static const char* const defaults[ItemCount] = {
+        "Empty", "Wood", "Stone", "Seeds", "Carrot",
+        "Water Bucket", "Soil", "Fish", "Fishing Rod", "Shovel"
+    };
+    for (int i = 0; i < ItemCount; i++) {
+        strcpy(c->names[i], defaults[i]);
+    }
+}
+
+
+// заполняет каталог: из файла, а если не вышло - стандартными названиями
+void catalog_init(ItemCatalog* c) {
+    if (!load_names_from_file(c)) {
+        printf("%s не найден или повреждён. Используем стандартные названия.\n", ITEMS_FILE);
+        set_default_names(c);
+    }
 }
 
 
 // функция для получения названия предмета по его идентификатору
 // (возвращает указатель на строку с названием предмета)
-const char* item_name(int item_id) {
-    //статический массив указателей на строки
-    static const char* const names[ItemCount] = {
-        "Empty", "Wood", "Stone", "Seeds", "Carrot",
-        "Water Bucket", "Soil", "Fish", "Fishing Rod", "Shovel"
-    };
+const char* item_name(const ItemCatalog* c, int item_id) {
     if (item_id < 0 || item_id >= ItemCount) {
         return "???";
     }
-    return names[item_id];
+    return c->names[item_id];
 }
 
 
@@ -123,18 +175,18 @@ void backpack_add_capacity(Backpack* b, int extra) {
 
 
 //вывода содержимого рюкзака и его характеристик
-void backpack_print(const Backpack* b) {
+void backpack_print(const Backpack* b, const * c) {
     for (int i = 0; i < BACKPACK_SLOTS; i++) {
 
         printf("  Слот %d: [%d] %s (вес %d)\n",
-            i,                          // номер ячейки
-            b->slots[i],                // id предмета
-            item_name(b->slots[i]),     // Название
-            item_weight(b->slots[i]));  // вес
+            i,                              // номер ячейки
+            b->slots[i],                    // id предмета
+            item_name(c, b->slots[i]),      // Название
+            item_weight(b->slots[i]));      // вес
     }
 
     printf("  Вес: %d/%d, состояние: %s\n",
-        b->total_weight,             // общий вес 
+        b->total_weight,             // общий вес
         b->max_capacity,             // вес макс.
         load_state_name(b->state));  // состояние рюкзака
 }
